@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  fastapi:
+    build: ./backend
+    container_name: vision_fusion_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - uploads_volume:/app/uploads
+      - models_volume:/app/models
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - qdrant
+      - redis
+    networks:
+      - vision_network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant_db
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      - vision_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - vision_network
+
+volumes:
+  uploads_volume:
+  models_volume:
+  qdrant_storage:
+  redis_data:
+
+networks:
+  vision_network:
+    driver: bridge
